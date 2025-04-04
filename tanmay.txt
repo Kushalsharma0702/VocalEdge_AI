@@ -1,0 +1,9 @@
+
+🧠 Voice Health Report
+Confidence Level: Moderate (50.0%)
+Pitch Mean: 192.2 Hz, Pitch STD: 112.05
+Energy Mean: 0.06208, Energy STD: 0.04039
+Pauses Detected: 0, Fillers Estimated: 11
+
+Suggestions to Improve:
+- Practice reducing filler words like 'um' and 'uh'.
