@@ -7,6 +7,10 @@ import speech_recognition as sr
 from scipy.signal import find_peaks
 from scipy.ndimage import median_filter
 import soundfile as sf
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from datetime import datetime
+import matplotlib.pyplot as plt
 
 # Audio stream config
 CHUNK = 1024
@@ -46,13 +50,11 @@ def check_initial_silence(y, sr, threshold=0.01, duration_sec=5):
     if energy < threshold:
         print("⚠️ You remained silent in the first few seconds. Try starting promptly.")
 
-
 def check_audio_presence(y):
     if np.max(np.abs(y)) < 0.005:
         print("❌ No voice detected in the recording. Please try again.")
         return False
     return True
-
 
 def detect_use_case_from_text(transcribed_text):
     transcribed_text = transcribed_text.lower()
@@ -62,14 +64,11 @@ def detect_use_case_from_text(transcribed_text):
                 return use_case
     return None
 
-
 def get_custom_suggestions(use_case):
     return USE_CASE_SUGGESTIONS.get(use_case, [])
 
-
 def analyze_voice(y, rate):
     y = y / (np.max(np.abs(y)) + 1e-5)
-
     check_initial_silence(y, rate)
     if not check_audio_presence(y):
         return ("No Voice", 0, ["Please speak clearly and close to the mic."], 0, 0, 0, 0, 0, 0)
@@ -152,14 +151,10 @@ def analyze_voice(y, rate):
     return (confidence_level, confidence_score, suggestions, 
             pitch_mean, pitch_std, energy_mean, energy_std, pause_count, filler_count)
 
-
 def process_audio_file(file_path):
     y, sr = librosa.load(file_path, sr=RATE)
-    
     sf.write("temp.wav", y, sr)
-
     return analyze_voice(y, sr)
-
 
 def record_and_process():
     p = pyaudio.PyAudio()
@@ -178,11 +173,8 @@ def record_and_process():
     print("🔍 Processing your voice...")
     audio_data = b''.join(frames)
     y = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32)
-    import soundfile as sf
     sf.write("temp.wav", y, RATE)
-
     return analyze_voice(y, RATE)
-
 
 def print_report(level, score, suggestions, pitch_mean, pitch_std, energy_mean, energy_std, pause_count, filler_count):
     report = "\n🧠 Voice Health Report\n"
@@ -199,20 +191,51 @@ def print_report(level, score, suggestions, pitch_mean, pitch_std, energy_mean, 
     print(report)
     return report
 
-
-def save_report(report_str):
-    save_choice = input("Do you want to save the report? (y/n): ")
+def save_report(report_str, confidence_score, pitch_mean, energy_mean, pause_count, filler_count):
+    save_choice = input("Do you want to save the report as PDF? (y/n): ")
     if save_choice.lower() == 'y':
-        file_name = input("Enter the filename to save (e.g., report.txt): ")
+        reports_dir = os.path.join(os.getcwd(), "reports")
+        os.makedirs(reports_dir, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"vocaledge-ai_report_{timestamp}.pdf"
+        filepath = os.path.join(reports_dir, filename)
+
         try:
-            with open(file_name, "w", encoding="utf-8") as f:
-                f.write(report_str)
-            print(f"✅ Report saved as {file_name}")
+            fig, ax = plt.subplots()
+            categories = ['Confidence', 'Pitch', 'Energy', 'Pauses', 'Fillers']
+            values = [confidence_score, pitch_mean, energy_mean * 1000, pause_count, filler_count]
+            ax.bar(categories, values, color=['green', 'blue', 'orange', 'purple', 'red'])
+            ax.set_title('Voice Feature Overview')
+            plt.tight_layout()
+            graph_path = os.path.join(reports_dir, "graph.png")
+            plt.savefig(graph_path)
+            plt.close()
+
+            c = canvas.Canvas(filepath, pagesize=A4)
+            width, height = A4
+            x_margin, y_margin = 50, 800
+
+            c.setFont("Helvetica-Bold", 18)
+            c.drawString(x_margin, y_margin, "🧠 VocalEdge AI - Voice Health Report")
+            c.setFont("Helvetica", 12)
+            y_margin -= 30
+
+            for line in report_str.split('\n'):
+                c.drawString(x_margin, y_margin, line)
+                y_margin -= 15
+                if y_margin < 100:
+                    c.showPage()
+                    y_margin = 800
+
+            c.drawImage(graph_path, 100, 300, width=400, preserveAspectRatio=True)
+            c.save()
+
+            print(f"✅ Report saved as {filename} in 'reports/' folder.")
         except Exception as e:
-            print(f"❌ Failed to save report: {e}")
+            print(f"❌ Failed to save PDF report: {e}")
     else:
         print("Report not saved.")
-
 
 def main():
     while True:
@@ -238,7 +261,7 @@ def main():
             continue
 
         report_str = print_report(*result)
-        save_report(report_str)
+        save_report(report_str, result[1], result[3], result[5], result[7], result[8])
         print("\n🔁 Analysis complete. Returning to menu...")
 
 if __name__ == '__main__':
