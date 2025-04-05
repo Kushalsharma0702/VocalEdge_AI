@@ -4,6 +4,11 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import pyttsx3
+import kagglehub
+# Download latest version
+path = kagglehub.dataset_download("datamunge/sign-language-mnist")
+
+print("Path to dataset files:", path)
 from tensorflow.keras.models import load_model
 
 # Initialize text-to-speech engine
