@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Sign & Voice Health Chatbot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      margin: 0;
+      padding: 0;
+    }
+    .chat-container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .chat-box {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .message {
+      margin: 10px 0;
+    }
+    .user {
+      text-align: right;
+      color: blue;
+    }
+    .bot {
+      text-align: left;
+      color: green;
+    }
+    .input-container {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background: #4CAF50;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .options {
+      margin-top: 10px;
+    }
+    .options button {
+      margin: 5px 5px 0 0;
+      background-color: #007BFF;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h2>AI Sign Language & Voice Health Chatbot</h2>
+    <div class="chat-box" id="chatBox"></div>
+    <div class="options" id="options"></div>
+    <div class="input-container">
+      <input type="text" id="userInput" placeholder="Type your question or choose below..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chatBox");
+    const optionsBox = document.getElementById("options");
+
+    function appendMessage(message, sender) {
+      const msgDiv = document.createElement("div");
+      msgDiv.className = `message ${sender}`;
+      msgDiv.innerText = message;
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function sendMessage(text) {
+      const input = document.getElementById("userInput");
+      const message = text || input.value.trim();
+      if (message === "") return;
+      appendMessage(message, "user");
+      input.value = "";
+      optionsBox.innerHTML = "";
+      handleBotResponse(message);
+    }
+
+    function handleBotResponse(msg) {
+      const lower = msg.toLowerCase();
+      let response = "";
+
+      if (lower.includes("sign for")) {
+        const word = lower.split("sign for")[1].trim();
+        response = `The sign for "${word}" is shown here: [Insert video/image of ${word} sign].`;
+      } else if (lower.includes("throat") || lower.includes("voice")) {
+        response = `Please select the symptoms you're facing:`;
+        setTimeout(() => {
+          appendMessage(response, "bot");
+          showOptions(["Dryness", "Hoarseness", "Pain", "Frequent coughing"]);
+        }, 500);
+        return;
+      } else if (lower.includes("dryness")) {
+        response = `Dryness can be caused by dehydration or vocal fatigue. Suggestions:
+1. Increase water intake
+2. Use a humidifier
+3. Avoid caffeine/alcohol
+4. Try honey and warm water`;
+      } else if (lower.includes("hoarseness")) {
+        response = `Hoarseness often results from overuse or infection. Try:
+1. Voice rest
+2. Steam inhalation
+3. Avoid throat clearing
+4. See a doctor if persistent`;
+      } else if (lower.includes("pain")) {
+        response = `If you're experiencing throat pain, consider:
+1. Gargling with warm salt water
+2. Taking lozenges
+3. Avoiding spicy foods
+4. Consulting a healthcare provider if it lasts more than 3 days.`;
+      } else if (lower.includes("frequent coughing")) {
+        response = `Frequent coughing may signal allergies or throat irritation. Try:
+1. Avoiding allergens
+2. Staying hydrated
+3. Using cough syrup (if prescribed)
+4. Seeing a doctor if ongoing`;
+      } else if (lower.includes("thank you")) {
+        response = "You're welcome! Would you like to learn a new sign or check your symptoms again?";
+      } else {
+        response = "I'm here to help! Please choose an option below or ask me a question.";
+        setTimeout(() => showOptions(["What is the sign for Hello?", "Why is my voice hoarse?", "Throat pain suggestions", "Teach me a sign"]), 500);
+      }
+
+      setTimeout(() => appendMessage(response, "bot"), 500);
+    }
+
+    function showOptions(options) {
+      optionsBox.innerHTML = "";
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.innerText = opt;
+        btn.onclick = () => sendMessage(opt);
+        optionsBox.appendChild(btn);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,7 +1,0 @@
-
-🧠 Voice Health Report
-Confidence Level: Confident (77.1%)
-Pitch Mean: 229.8 Hz, Pitch STD: 42.26
-Energy Mean: 0.47719, Energy STD: 0.01728
-Pauses Detected: 0, Fillers Estimated: 2
-✅ Your voice sounds confident and fluent!
